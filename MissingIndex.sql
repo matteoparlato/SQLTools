@@ -1,16 +1,21 @@
-SELECT STATEMENT AS [database.scheme.table],
-                    column_id,
-                    COLUMN_NAME,
-                    column_usage,
-                    migs.user_seeks,
-                    migs.user_scans,
-                    migs.last_user_seek,
-                    migs.avg_total_user_cost,
-                    migs.avg_user_impact
-FROM sys.dm_db_missing_index_details AS mid CROSS APPLY sys.dm_db_missing_index_columns (mid.index_handle)
-INNER JOIN sys.dm_db_missing_index_groups AS mig ON mig.index_handle = mid.index_handle
-INNER JOIN sys.dm_db_missing_index_group_stats AS migs ON mig.index_group_handle=migs.group_handle
-ORDER BY mig.index_group_handle,
-         mig.index_handle,
-         column_id
-GO
+SELECT
+        D.index_handle,
+        [statement] AS full_object_name,
+        unique_compiles,
+        avg_user_impact,
+        user_scans,
+        user_seeks,
+        column_name,
+        column_usage,
+        GS.last_user_seek
+FROM
+        sys.dm_db_missing_index_groups G
+        JOIN sys.dm_db_missing_index_group_stats GS ON G.index_group_handle = GS.group_handle
+        JOIN sys.dm_db_missing_index_details D ON G.index_handle = D.index_handle
+        CROSS APPLY sys.dm_db_missing_index_columns (D.index_handle) DC
+where
+        column_usage <> 'INCLUDE'
+ORDER BY
+        GS.user_seeks DESC,
+        D.index_handle,
+        [statement];
