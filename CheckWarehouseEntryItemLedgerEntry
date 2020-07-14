@@ -1,0 +1,29 @@
+SELECT
+	T1.[Item No_],
+	T1.Qta AS QTA_ILE,
+	T2.Qta AS QTA_WE
+FROM
+	(
+		SELECT
+			[Item No_],
+			sum(Quantity) AS Qta
+		FROM
+			[COMPANYNAME$Item Ledger Entry]
+		WHERE
+			[Location Code] = '100'
+		GROUP BY
+			[Item No_]
+	) T1 FULL
+	OUTER JOIN (
+		SELECT
+			[Item No_],
+			sum(Quantity) AS Qta
+		FROM
+			[COMPANYNAME$Warehouse Entry]
+		WHERE
+			[Location Code] = '100'
+		GROUP BY
+			[Item No_]
+	) T2 ON T1.[Item No_] = T2.[Item No_]
+WHERE
+	T1.Qta <> T2.Qta
